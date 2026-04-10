@@ -1,0 +1,49 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: fraud-rollout-automated
+  namespace: fraud-detection
+spec:
+  replicas: 3
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: fraud-scoring
+  template:
+    metadata:
+      labels:
+        app: fraud-scoring
+    spec:
+      containers:
+        - name: fraud-api
+          image: fraud-scoring:v2-buggy
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: MODEL_VERSION
+              value: v2-buggy
+  strategy:
+    canary:
+      stableService: fraud-stable
+      canaryService: fraud-canary
+      steps:
+        - setWeight: 10
+        - pause:
+            duration: 30s
+        - analysis:
+            templates:
+              - templateName: fraud-latency-and-errors
+        - setWeight: 25
+        - pause:
+            duration: 30s
+        - analysis:
+            templates:
+              - templateName: fraud-latency-and-errors
+        - setWeight: 50
+        - pause:
+            duration: 30s
+        - analysis:
+            templates:
+              - templateName: fraud-latency-and-errors
+        - setWeight: 100
