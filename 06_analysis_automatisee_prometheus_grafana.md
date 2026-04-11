@@ -114,23 +114,15 @@ Le système doit alors déclencher un abort automatique.
 - un canary automatisé `10 -> 25 -> 50 -> 100`
 - un abort automatique si les seuils sont dépassés
 
-## Projet fil rouge du chapitre
+Dans le dépôt `argocd-ml-fraud-template`, le fichier `k8s/analysis/prometheus-analysis-template.yaml` contient volontairement une structure incomplète.
 
-Dans ce chapitre, vous allez compléter le fichier :
+Vous allez le compléter pour lui donner un vrai rôle de garde-fou pendant un rollout.
 
-`k8s/analysis/prometheus-analysis-template.yaml`
-
-Le template contient volontairement une structure incomplète.
-
-## Exercice
-
-Vous devez compléter :
+Vous devez renseigner :
 
 - la requête Prometheus
 - `successCondition`
 - `failureCondition`
-
-Le but est de créer une analyse qui puisse servir de garde-fou pendant un rollout.
 
 Le template part de cette base :
 
@@ -155,8 +147,9 @@ spec:
 ```
 
 Essayez d'abord de proposer votre propre version.
+Ensuite, si vous voulez vérifier votre écriture, ouvrez le bloc suivant.
 
-## Solution
+%%SOLUTION%%
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -191,7 +184,9 @@ spec:
             )
 ```
 
-### Ce que vous devez retenir
+%%SOLUTION%%
+
+Ce que vous devez retenir :
 
 - une analyse automatisée repose sur une règle claire
 - Prometheus fournit la métrique

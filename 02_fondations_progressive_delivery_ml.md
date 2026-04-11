@@ -120,24 +120,13 @@ Le scénario du module est le suivant :
 - `fraud-model:v2` est le challenger
 - `fraud-model:v2-buggy` sert à démontrer un abort automatique
 
-## Projet fil rouge du chapitre
-
-Dans ce chapitre, vous allez regarder de plus près le service ML du repo template.
-
-L'objectif n'est pas encore de compléter un rollout.
-L'objectif est de comprendre le service qui sera déployé.
-
-### Ce que vous devez faire
-
-Ouvrez `argocd-ml-fraud-template/service/app.py`.
+Avant de passer aux stratégies de trafic, prenez quelques minutes pour relire `argocd-ml-fraud-template/service/app.py`.
 
 Repérez trois éléments :
 
 - la variable `MODEL_VERSION`
 - la fonction `score_request(...)`
 - les métriques Prometheus
-
-### Ce que vous devez comprendre
 
 Dans le template, le service distingue déjà plusieurs versions :
 
@@ -153,22 +142,19 @@ if MODEL_VERSION == "v2-buggy":
 ```
 
 Ce code n'est pas encore parfait, et c'est normal.
-
 Il sert déjà à faire comprendre une idée essentielle :
 
 - une version différente peut avoir un comportement différent
 - ce comportement peut être plus lent ou plus risqué
 - c'est précisément pour cela que le progressive delivery est utile
 
-### Exercice d'observation
-
-Dans le template, repérez aussi les métriques suivantes :
+En observant ce même fichier, repérez aussi les métriques suivantes :
 
 - `fraud_predictions_total`
 - `fraud_prediction_latency_seconds`
 - `fraud_prediction_errors_total`
 
-Question : pourquoi ces métriques sont-elles utiles pour un rollout ?
+Question utile : pourquoi ces métriques seront-elles importantes pour un rollout ?
 
 Réponse attendue :
 

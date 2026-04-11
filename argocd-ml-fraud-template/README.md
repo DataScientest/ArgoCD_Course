@@ -2,13 +2,14 @@
 
 Ce dépôt est le **projet fil rouge** du module.
 
-Le but est simple :
+Vous allez l'utiliser pendant tout le cours.
+Le principe est simple :
 
-- vous partez de cette version incomplète
-- vous avancez chapitre après chapitre
-- vous complétez progressivement le service et les manifests Kubernetes
+- vous partez d'une base incomplète
+- vous ajoutez des morceaux au fur et à mesure
+- vous testez ce que vous avez ajouté
 
-À la fin du module, vous aurez un service ML de scoring de fraude capable de montrer :
+À la fin, vous aurez un service ML de scoring de fraude capable de montrer :
 
 - une version `v1`
 - une version `v2`
@@ -23,10 +24,12 @@ Le but est simple :
 ```txt
 argocd-ml-fraud-template/
 ├── README.md
+├── Makefile
 ├── service/
 │   ├── app.py
 │   ├── Dockerfile
-│   └── requirements.txt
+│   ├── requirements.txt
+│   └── tests/
 ├── scripts/
 │   ├── kind-config.yaml
 │   ├── install-rollouts.sh
@@ -40,55 +43,74 @@ argocd-ml-fraud-template/
     └── analysis/
 ```
 
-## Progression conseillée
+## Ce que vous pouvez déjà tester
 
-### Chapitres 1 et 2
+Même si le dépôt est incomplet, vous pouvez déjà tester le service ML localement.
 
-Objectif : comprendre le use case et lancer le cluster local.
+### Installer les dépendances
 
-À faire :
+```bash
+make install
+```
 
-- lire `scripts/kind-config.yaml`
-- créer le cluster `kind`
-- lire les manifests Kubernetes du dossier `k8s/`
+### Lancer le service
+
+```bash
+make run
+```
+
+### Lancer les tests automatisés du service
+
+```bash
+make test
+```
+
+Ces tests vérifient déjà :
+
+- `/health`
+- `/predict`
+- `/metrics`
+
+Cela vous permet de vérifier que le service reste cohérent pendant que vous avancez dans le module.
+
+## Ce que vous compléterez pendant le cours
 
 ### Chapitre 3
 
-Objectif : compléter le shadow.
+Vous compléterez :
 
-À faire :
-
-- compléter l'Ingress de shadow
-- vérifier que `v1` sert la réponse
-- vérifier que `v2` reçoit le trafic miroir
+- `k8s/ingress/shadow-ingress.yaml`
 
 ### Chapitre 4
 
-Objectif : compléter le canary.
+Vous compléterez :
 
-À faire :
-
-- compléter le `Rollout` canary
-- ajouter les étapes `10 -> 25 -> 50 -> 100`
+- `k8s/rollouts/canary-rollout.yaml`
 
 ### Chapitre 5
 
-Objectif : compléter le blue-green.
+Vous compléterez :
 
-À faire :
-
-- compléter `activeService`
-- compléter `previewService`
+- `k8s/rollouts/bluegreen-rollout.yaml`
 
 ### Chapitre 6
 
-Objectif : compléter l'analyse automatisée.
+Vous compléterez :
 
-À faire :
+- `k8s/analysis/prometheus-analysis-template.yaml`
 
-- compléter l'`AnalysisTemplate`
-- brancher les requêtes Prometheus
-- définir `successCondition` et `failureCondition`
+## Makefile
+
+Quelques commandes utiles sont déjà disponibles :
+
+- `make install`
+- `make run`
+- `make test`
+- `make build-image`
+- `make kind-create`
+- `make kind-delete`
+- `make apply-namespace`
+- `make apply-services`
 
 ## Important
 
@@ -100,7 +122,5 @@ Cela veut dire que certains fichiers contiennent volontairement :
 - des valeurs à remplacer
 - des étapes incomplètes
 
-Une version terminée existe à côté dans le dépôt `argocd-ml-fraud-complete`.
-
-Ce dépôt terminé sert de référence côté formateur.
-Les apprenants travaillent, eux, à partir du template et des solutions données dans le cours.
+Vous n'êtes pas censé tout exécuter parfaitement dès le début.
+Le dépôt est conçu pour évoluer avec le cours.

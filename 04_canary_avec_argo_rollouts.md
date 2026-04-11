@@ -121,18 +121,11 @@ Si tout reste sain, vous promouvez à `25 %`, puis à `50 %`, puis à `100 %`.
 - un YAML `Rollout` simple
 - un scénario de promotion manuelle
 
-## Projet fil rouge du chapitre
+Dans le dépôt `argocd-ml-fraud-template`, le fichier `k8s/rollouts/canary-rollout.yaml` contient déjà un début de stratégie.
 
-Dans ce chapitre, vous allez compléter le fichier :
+Mais les étapes du canary ne sont pas encore complètes.
 
-`k8s/rollouts/canary-rollout.yaml`
-
-Le template contient déjà un début de stratégie.
-Mais les étapes du canary ne sont pas complètes.
-
-## Exercice
-
-Dans le template, vous avez actuellement ceci :
+Vous avez actuellement ceci :
 
 ```yaml
 steps:
@@ -150,9 +143,9 @@ Votre objectif est d'obtenir la progression suivante :
 - pause
 - `100 %`
 
-Essayez de compléter le YAML vous-même avant de regarder la solution.
+Essayez de compléter le YAML vous-même avant d'ouvrir le bloc suivant.
 
-## Solution
+%%SOLUTION%%
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -193,7 +186,9 @@ spec:
         - setWeight: 100
 ```
 
-### Ce que vous devez retenir
+%%SOLUTION%%
+
+Ce que vous devez retenir :
 
 - chaque `setWeight` définit une nouvelle part de trafic
 - chaque `pause` crée un point d'observation

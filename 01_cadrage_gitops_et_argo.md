@@ -14,6 +14,10 @@ Le but est de répondre à trois questions :
 - qu'est-ce que GitOps ajoute à cette logique
 - pourquoi **Argo CD** et **Argo Rollouts** ne font pas la même chose
 
+Le dépôt fil rouge utilisé dans le module est disponible ici :
+
+`https://github.com/<organisation>/argocd-ml-fraud-template`
+
 ## Le grand modèle mental
 
 Imaginez un chantier.
@@ -158,34 +162,24 @@ Mais Argo Rollouts décide si `v2` reçoit :
 - 50 % du trafic
 - ou 100 % du trafic
 
-## Projet fil rouge du chapitre
+À partir de ce chapitre, vous allez travailler avec le dépôt `argocd-ml-fraud-template`.
 
-À partir de ce chapitre, vous allez utiliser le dépôt `argocd-ml-fraud-template`.
+Pour le moment, vous n'avez rien à compléter.
+Le plus utile est de parcourir calmement sa structure.
 
-Le but n'est pas seulement de lire le cours.
-Le but est aussi de manipuler un projet que vous allez enrichir au fil du module.
+Ouvrez :
 
-Dans ce premier chapitre, il n'y a pas encore de stratégie de rollout à compléter.
-Mais vous devez prendre en main la structure du dépôt.
+- `service/app.py`
+- `scripts/kind-config.yaml`
+- les dossiers `k8s/ingress/`, `k8s/rollouts/` et `k8s/analysis/`
 
-### Ce que vous devez faire
-
-1. ouvrez le dépôt `argocd-ml-fraud-template`
-2. repérez les dossiers `service/`, `scripts/` et `k8s/`
-3. ouvrez `service/app.py`
-4. ouvrez `scripts/kind-config.yaml`
-5. repérez les dossiers `k8s/ingress/`, `k8s/rollouts/` et `k8s/analysis/`
-
-À ce stade, vous ne cherchez pas encore à tout exécuter.
-Vous construisez surtout une carte mentale du projet.
-
-### Ce que vous devez comprendre
+Le but est surtout de comprendre la place de chaque partie :
 
 - `service/` contient le service ML
-- `scripts/` contient les briques de setup du lab
-- `k8s/` contient les manifestes que vous allez compléter au fil des chapitres
+- `scripts/` contient les scripts de setup du lab
+- `k8s/` contient les manifestes que vous allez compléter au fil du module
 
-### Exemple utile à lire tout de suite
+Voici par exemple un extrait utile à lire dès maintenant dans `service/app.py` :
 
 Dans `service/app.py`, vous pouvez déjà repérer les endpoints du service :
 
@@ -212,7 +206,7 @@ Ce que cela montre déjà :
 - `/metrics` servira plus tard pour Prometheus
 
 Vous n'avez pas encore besoin de modifier ce code.
-Mais il est important de voir dès maintenant le service que vous allez faire évoluer.
+Mais il est important de voir dès maintenant le service que vous allez faire évoluer pendant tout le module.
 
 ## Erreurs fréquentes
 

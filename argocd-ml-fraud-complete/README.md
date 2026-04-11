@@ -2,14 +2,13 @@
 
 Ce dépôt correspond à une version **terminée** du projet fil rouge.
 
-Il peut servir :
+Il sert côté formateur :
 
-- de référence pédagogique
+- de référence fonctionnelle
 - de correction
 - de support de démonstration pour les labs
 
-Ce dépôt n'est pas pensé comme point d'entrée apprenant.
-Le point d'entrée apprenant reste `argocd-ml-fraud-template`.
+Le point d'entrée apprenant reste le template.
 
 ## Use case
 
@@ -27,22 +26,53 @@ Versions manipulées dans le module :
 - `v2`
 - `v2-buggy`
 
-## Dépôt et progression
+## Structure du dépôt
 
-Le dépôt est organisé pour illustrer les chapitres du cours :
+```txt
+argocd-ml-fraud-complete/
+├── README.md
+├── Makefile
+├── service/
+│   ├── app.py
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── tests/
+├── scripts/
+└── k8s/
+```
 
-- fondations du service ML
-- shadow
-- canary
-- blue-green
-- analysis automatisée
+## Vérifier le service localement
 
-## Démarrage rapide
+### Installer les dépendances
+
+```bash
+make install
+```
+
+### Lancer le service
+
+```bash
+make run
+```
+
+### Lancer les tests
+
+```bash
+make test
+```
+
+Les tests couvrent déjà :
+
+- `/health`
+- `/predict`
+- `/metrics`
+
+## Démarrage rapide du lab
 
 ### 1. Créer le cluster local
 
 ```bash
-kind create cluster --name argocd-ml --config scripts/kind-config.yaml
+make kind-create
 ```
 
 ### 2. Installer les briques
@@ -53,26 +83,47 @@ bash scripts/install-rollouts.sh
 bash scripts/install-monitoring.sh
 ```
 
-### 3. Déployer le namespace et les services
+### 3. Déployer la base Kubernetes
 
 ```bash
-kubectl apply -f k8s/namespace.yaml
-kubectl apply -f k8s/services/
+make apply-base
 ```
 
-### 4. Appliquer un rollout
+### 4. Appliquer les manifests selon la démonstration visée
 
 ```bash
-kubectl apply -f k8s/rollouts/canary-rollout.yaml
-kubectl argo rollouts get rollout fraud-rollout -n fraud-detection
+make apply-shadow
+make apply-canary
+make apply-bluegreen
+make apply-analysis
 ```
 
-## Important
+## Makefile
 
-Les images du service sont référencées ici sous des noms pédagogiques.
+Commandes disponibles :
 
-Dans un vrai lab, vous pourrez :
+- `make install`
+- `make run`
+- `make test`
+- `make build-v1`
+- `make build-v2`
+- `make build-v2-buggy`
+- `make kind-create`
+- `make kind-delete`
+- `make apply-base`
+- `make apply-shadow`
+- `make apply-canary`
+- `make apply-bluegreen`
+- `make apply-analysis`
 
-- les construire localement
-- les charger dans `kind`
-- ou les publier dans un registre
+## Note importante
+
+Ce dépôt donne une base cohérente pour les démonstrations.
+
+Selon votre environnement de lab, vous pourrez encore avoir besoin de :
+
+- charger les images dans `kind`
+- adapter les noms d'images
+- brancher une stack Prometheus / Grafana complète
+
+L'objectif de ce dépôt est d'offrir une référence technique claire et lisible pour accompagner le module.

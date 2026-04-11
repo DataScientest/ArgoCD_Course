@@ -95,17 +95,11 @@ Dans la démonstration du module :
 - `v2` reçoit le trafic miroir
 - on observe les métriques et les logs
 
-## Projet fil rouge du chapitre
+Dans le dépôt `argocd-ml-fraud-template`, le fichier `k8s/ingress/shadow-ingress.yaml` contient déjà une base.
 
-Dans ce chapitre, vous allez compléter le shadow dans le dépôt `argocd-ml-fraud-template`.
+Vous pouvez maintenant l'utiliser pour passer de la théorie à une première implémentation.
 
-Le fichier à modifier est :
-
-`k8s/ingress/shadow-ingress.yaml`
-
-## Exercice
-
-Dans le template, l'Ingress contient déjà une base :
+Vous y trouverez ceci :
 
 ```yaml
 metadata:
@@ -121,7 +115,9 @@ Votre objectif est d'ajouter les annotations nécessaires pour :
 
 Prenez quelques minutes pour essayer de le faire vous-même.
 
-## Solution
+Si vous voulez vérifier votre écriture, ouvrez le bloc suivant.
+
+%%SOLUTION%%
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -148,7 +144,9 @@ spec:
                   number: 80
 ```
 
-### Ce que cette solution fait
+%%SOLUTION%%
+
+Ce que cette solution fait :
 
 - `mirror-target` envoie une copie de la requête vers le challenger
 - `mirror-request-body: "on"` indique que le corps de la requête doit aussi être copié

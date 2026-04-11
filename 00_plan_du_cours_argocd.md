@@ -60,6 +60,10 @@ Ce dépôt est destiné aux apprenants.
 Vous partez de cette base au début du module.
 Puis vous la complétez au fur et à mesure des chapitres.
 
+Lien GitHub du template :
+
+`https://github.com/<organisation>/argocd-ml-fraud-template`
+
 Vous y trouverez volontairement :
 
 - des fichiers incomplets
@@ -82,7 +86,7 @@ La logique pédagogique du module est la suivante :
 
 - le cours explique une notion
 - puis il vous demande de l'implémenter dans le repo template
-- une solution ou un exemple complet reste disponible dans le chapitre
+- quand une correction de l'exercice est utile, elle est masquée dans un bloc `%%SOLUTION%%`
 
 ## Stack du module
 

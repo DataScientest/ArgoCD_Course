@@ -110,18 +110,10 @@ Dans ce module, la démonstration consiste à :
 - un YAML blue-green minimal
 - un tableau comparatif canary vs blue-green
 
-## Projet fil rouge du chapitre
-
-Dans ce chapitre, vous allez compléter le fichier :
-
-`k8s/rollouts/bluegreen-rollout.yaml`
-
-Le template vous laisse deux éléments importants à renseigner :
+Dans le dépôt `argocd-ml-fraud-template`, le fichier `k8s/rollouts/bluegreen-rollout.yaml` vous laisse deux éléments importants à renseigner :
 
 - `activeService`
 - `previewService`
-
-## Exercice
 
 Complétez cette partie du YAML :
 
@@ -132,9 +124,9 @@ strategy:
     autoPromotionEnabled: false
 ```
 
-Prenez le temps d'essayer avant de regarder la solution.
+Prenez le temps d'essayer avant d'ouvrir le bloc suivant.
 
-## Solution
+%%SOLUTION%%
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -167,7 +159,9 @@ spec:
       autoPromotionEnabled: false
 ```
 
-### Ce que vous devez retenir
+%%SOLUTION%%
+
+Ce que vous devez retenir :
 
 - `activeService` pointe vers la version actuellement visible
 - `previewService` pointe vers la version candidate
