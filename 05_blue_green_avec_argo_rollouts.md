@@ -24,7 +24,7 @@ Vous voulez plutôt :
 
 C'est le rôle du blue-green.
 
-## Le grand modèle mental
+## La philosophie derrière
 
 Imaginez deux scènes de théâtre.
 
@@ -110,7 +110,7 @@ Dans ce module, la démonstration consiste à :
 - un YAML blue-green minimal
 - un tableau comparatif canary vs blue-green
 
-Dans le dépôt `argocd-ml-fraud-template`, le fichier `k8s/rollouts/bluegreen-rollout.yaml` vous laisse deux éléments importants à renseigner :
+Dans le dépôt du projet, le fichier `k8s/rollouts/bluegreen-rollout.yaml` vous laisse deux éléments importants à renseigner :
 
 - `activeService`
 - `previewService`

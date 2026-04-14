@@ -19,7 +19,7 @@ Quand vous n'avez pas encore confiance dans une nouvelle version, vous voulez l'
 
 C'est exactement le rôle du shadow.
 
-## Le grand modèle mental
+## La philosophie derrière
 
 Imaginez un stagiaire qui suit un expert pendant une journée.
 
@@ -95,7 +95,7 @@ Dans la démonstration du module :
 - `v2` reçoit le trafic miroir
 - on observe les métriques et les logs
 
-Dans le dépôt `argocd-ml-fraud-template`, le fichier `k8s/ingress/shadow-ingress.yaml` contient déjà une base.
+Dans le dépôt du projet, le fichier `k8s/ingress/shadow-ingress.yaml` contient déjà une base.
 
 Vous pouvez maintenant l'utiliser pour passer de la théorie à une première implémentation.
 

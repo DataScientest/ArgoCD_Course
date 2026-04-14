@@ -22,7 +22,7 @@ Parce qu'il permet d'exposer une petite part de trafic réel à la nouvelle vers
 
 Vous obtenez donc une validation plus proche de la réalité, tout en gardant le risque sous contrôle.
 
-## Le grand modèle mental
+## La philosophie derrière
 
 Imaginez que vous ouvrez une nouvelle caisse dans un magasin.
 
@@ -121,7 +121,7 @@ Si tout reste sain, vous promouvez à `25 %`, puis à `50 %`, puis à `100 %`.
 - un YAML `Rollout` simple
 - un scénario de promotion manuelle
 
-Dans le dépôt `argocd-ml-fraud-template`, le fichier `k8s/rollouts/canary-rollout.yaml` contient déjà un début de stratégie.
+Dans le dépôt du projet, le fichier `k8s/rollouts/canary-rollout.yaml` contient déjà un début de stratégie.
 
 Mais les étapes du canary ne sont pas encore complètes.
 

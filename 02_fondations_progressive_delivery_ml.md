@@ -108,7 +108,7 @@ Cela veut dire qu'un bon déploiement ML demande :
 - une validation progressive
 - la possibilité de revenir vite en arrière
 
-## Le fil rouge du module
+## Le Cas d' usage
 
 Nous allons travailler sur un service unique :
 
@@ -120,7 +120,21 @@ Le scénario du module est le suivant :
 - `fraud-model:v2` est le challenger
 - `fraud-model:v2-buggy` sert à démontrer un abort automatique
 
-Avant de passer aux stratégies de trafic, prenez quelques minutes pour relire `argocd-ml-fraud-template/service/app.py`.
+Avant de passer aux stratégies de trafic, prenez quelques minutes pour relire `service/app.py` dans le dépôt du projet.
+
+Si ce n'est pas déjà fait, créez aussi votre fichier local `service/.env` à partir de `service/.env.example`.
+
+```bash
+cp service/.env.example service/.env
+```
+
+Puis vérifiez que vous partez bien avec :
+
+```env
+MODEL_VERSION=v1
+```
+
+Cela vous permettra de lancer et tester localement le service avant de l'utiliser dans Kubernetes.
 
 Repérez trois éléments :
 
@@ -128,7 +142,7 @@ Repérez trois éléments :
 - la fonction `score_request(...)`
 - les métriques Prometheus
 
-Dans le template, le service distingue déjà plusieurs versions :
+Dans le projet, le service distingue déjà plusieurs versions :
 
 ```python
 MODEL_VERSION = os.getenv("MODEL_VERSION", "v1")
@@ -154,13 +168,19 @@ En observant ce même fichier, repérez aussi les métriques suivantes :
 - `fraud_prediction_latency_seconds`
 - `fraud_prediction_errors_total`
 
-Question utile : pourquoi ces métriques seront-elles importantes pour un rollout ?
+Question utile (essayez d'y répondre de votre côté pour vérifier vos connaissances) : pourquoi ces métriques seront-elles importantes pour un rollout ?
+
+Si vous voulez vérifier votre réponse, ouvrez le bloc suivant.
+
+%%SOLUTION%%
 
 Réponse attendue :
 
 - elles donnent de la visibilité sur le comportement technique du service
 - elles permettront plus tard d'alimenter Prometheus
 - elles préparent la décision de promotion ou d'abort
+
+%%SOLUTION%%
 
 ## Exemple concret
 

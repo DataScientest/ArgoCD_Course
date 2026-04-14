@@ -18,7 +18,7 @@ Si vous promouvez une nouvelle version uniquement à l'intuition, vous prenez un
 
 L'objectif de ce chapitre est donc de montrer comment décider à partir de signaux mesurables.
 
-## Le grand modèle mental
+## La philosophie derrière
 
 Imaginez un feu de signalisation automatique.
 
@@ -114,7 +114,7 @@ Le système doit alors déclencher un abort automatique.
 - un canary automatisé `10 -> 25 -> 50 -> 100`
 - un abort automatique si les seuils sont dépassés
 
-Dans le dépôt `argocd-ml-fraud-template`, le fichier `k8s/analysis/prometheus-analysis-template.yaml` contient volontairement une structure incomplète.
+Dans le dépôt du projet, le fichier `k8s/analysis/prometheus-analysis-template.yaml` contient volontairement une structure incomplète.
 
 Vous allez le compléter pour lui donner un vrai rôle de garde-fou pendant un rollout.
 
@@ -124,7 +124,7 @@ Vous devez renseigner :
 - `successCondition`
 - `failureCondition`
 
-Le template part de cette base :
+Le fichier part de cette base :
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1

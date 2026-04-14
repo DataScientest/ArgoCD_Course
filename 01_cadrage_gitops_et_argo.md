@@ -14,11 +14,7 @@ Le but est de répondre à trois questions :
 - qu'est-ce que GitOps ajoute à cette logique
 - pourquoi **Argo CD** et **Argo Rollouts** ne font pas la même chose
 
-Le dépôt fil rouge utilisé dans le module est disponible ici :
-
-`https://github.com/<organisation>/argocd-ml-fraud-template`
-
-## Le grand modèle mental
+## La philosophie derrière
 
 Imaginez un chantier.
 
@@ -147,22 +143,48 @@ Ce schéma veut dire :
 - Ingress contrôle la circulation du trafic
 - Prometheus et Grafana donnent de la visibilité
 
-## Exemple concret
+À partir de ce chapitre, vous allez travailler avec le dépôt du projet: [ArgoCD_Course](https://github.com/DataScientest/ArgoCD_Course.git).
 
-Vous avez un service de scoring de fraude.
+Avant d'aller plus loin, vérifiez que vous avez bien installé les outils suivants :
 
-- `fraud-model:v1` est stable
-- `fraud-model:v2` est candidate
+- `git`
+- `uv` -> https://github.com/astral-sh/uv.git
+- `docker`
+- `kind` -> 
+- `kubectl` -> 
+- `make`
 
-Argo CD peut appliquer la nouvelle définition.
-Mais Argo Rollouts décide si `v2` reçoit :
+Vous utiliserez aussi plus tard :
 
-- aucun trafic réel
-- 10 % du trafic
-- 50 % du trafic
-- ou 100 % du trafic
+- le plugin `kubectl argo rollouts`
 
-À partir de ce chapitre, vous allez travailler avec le dépôt `argocd-ml-fraud-template`.
+À ce stade, vous n'avez pas encore besoin d'avoir tout configuré dans Kubernetes.
+Mais ces outils doivent être présents pour pouvoir suivre le projet dans de bonnes conditions.
+
+Si vous êtes sur Linux, voici deux commandes utiles pour installer `kubectl` et `kind`.
+
+### Installer `kubectl`
+
+```bash
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/
+```
+
+### Installer `kind`
+
+```bash
+curl -Lo ./kind https://kind.sigs.k8s.io/dl/latest/kind-linux-amd64
+chmod +x ./kind
+sudo mv ./kind /usr/local/bin/kind
+```
+
+### Vérifier l'installation
+
+```bash
+kubectl version --client
+kind version
+```
 
 Pour le moment, vous n'avez rien à compléter.
 Le plus utile est de parcourir calmement sa structure.
@@ -170,12 +192,14 @@ Le plus utile est de parcourir calmement sa structure.
 Ouvrez :
 
 - `service/app.py`
+- `service/.env.example`
 - `scripts/kind-config.yaml`
 - les dossiers `k8s/ingress/`, `k8s/rollouts/` et `k8s/analysis/`
 
 Le but est surtout de comprendre la place de chaque partie :
 
 - `service/` contient le service ML
+- `service/.env.example` prépare déjà une configuration locale simple
 - `scripts/` contient les scripts de setup du lab
 - `k8s/` contient les manifestes que vous allez compléter au fil du module
 
@@ -204,6 +228,22 @@ Ce que cela montre déjà :
 - `/predict` sert la prédiction
 - `/health` sert à vérifier que le service répond
 - `/metrics` servira plus tard pour Prometheus
+
+Vous pouvez aussi repérer dès maintenant que le service lit sa version depuis l'environnement.
+
+Dans le dépôt du projet, une bonne pratique simple est déjà en place :
+
+```bash
+cp service/.env.example service/.env
+```
+
+Puis dans `service/.env` :
+
+```env
+MODEL_VERSION=v1
+```
+
+Cette variable sera utile tout au long du module pour faire vivre plusieurs versions du service.
 
 Vous n'avez pas encore besoin de modifier ce code.
 Mais il est important de voir dès maintenant le service que vous allez faire évoluer pendant tout le module.

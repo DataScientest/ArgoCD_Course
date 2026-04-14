@@ -104,6 +104,7 @@ Commandes disponibles :
 
 - `make install`
 - `make run`
+- `make status`
 - `make test`
 - `make build-v1`
 - `make build-v2`
