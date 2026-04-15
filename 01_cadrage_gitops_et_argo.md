@@ -245,6 +245,18 @@ MODEL_VERSION=v1
 
 Cette variable sera utile tout au long du module pour faire vivre plusieurs versions du service.
 
+Avant d'aller plus loin dans le projet, installez aussi les dépendances locales :
+
+```bash
+make install
+```
+
+Vous n'en avez pas encore besoin pour modifier les manifests Kubernetes.
+Mais vous en aurez besoin dès que vous voudrez lancer ou vérifier le service localement.
+
+Le projet s'appuie sur Python `3.11`.
+Si votre machine utilise une version plus ancienne, `uv` se chargera d'installer la bonne version pour créer `.venv`.
+
 Vous n'avez pas encore besoin de modifier ce code.
 Mais il est important de voir dès maintenant le service que vous allez faire évoluer pendant tout le module.
 

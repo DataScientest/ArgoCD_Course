@@ -126,7 +126,6 @@ metadata:
   name: fraud-shadow
   namespace: fraud-detection
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/mirror-target: http://fraud-canary.fraud-detection.svc.cluster.local$request_uri
     nginx.ingress.kubernetes.io/mirror-request-body: "on"
 spec:
@@ -157,37 +156,148 @@ Autrement dit :
 - `v1` reste visible pour l'utilisateur
 - `v2` travaille en arrière-plan
 
-## Exemple concret
+## Comment voir concrètement l'effet du shadow
 
-Vous avez un service de fraude avec :
+Vous avez raison de vous poser la question : un shadow n'est pas visible directement dans la réponse utilisateur.
 
-- `fraud-model:v1`
-- `fraud-model:v2`
+Si tout fonctionne bien :
 
-Une requête arrive.
+- la réponse reçue par l'utilisateur continue à venir de `v1`
+- mais `v2` reçoit aussi la requête en arrière-plan
 
-Le système fait alors ceci :
+Il faut donc observer le shadow avec d'autres signaux.
 
-1. l'utilisateur envoie une requête de scoring
-2. `v1` traite la requête officielle
-3. `v2` reçoit une copie en arrière-plan
-4. vous comparez latence, erreurs et stabilité
+### 1. Démarrer l'infrastructure du lab
 
-## Erreurs fréquentes
+Avant d'envoyer des requêtes, il faut d'abord avoir un cluster et les briques minimales du lab.
 
-### 1. Croire que le shadow valide toute la qualité métier
+Commencez par créer le cluster local :
 
-Pour éviter cette erreur :
+```bash
+make kind-create
+```
 
-- considérez le shadow comme une étape d'observation
-- ne le traitez pas comme une validation finale complète
+Puis installez les composants utiles pour ce chapitre :
 
-### 2. Oublier d'observer le challenger par version
+```bash
+bash scripts/install-ingress.sh
+bash scripts/install-rollouts.sh
+```
 
-Pour éviter cette erreur :
+Ensuite, appliquez la base du projet :
 
-- ajoutez `model_version` dans vos logs et métriques
-- séparez clairement ce qui vient de `v1` et ce qui vient de `v2`
+```bash
+make apply-namespace
+make apply-services
+```
+
+Puis construisez et chargez les deux versions du service dans `kind` :
+
+```bash
+make build-v1
+make build-v2
+make load-v1
+make load-v2
+```
+
+Ensuite, déployez les deux versions dans le cluster et appliquez l'Ingress de shadow :
+
+```bash
+make apply-shadow-base
+make apply-shadow-ingress
+```
+
+À ce stade, vous avez enfin une infrastructure sur laquelle observer le comportement du shadow.
+
+### 2. Vérifier que la réponse utilisateur reste stable
+
+Si vous voulez d'abord vérifier localement la forme de la requête, laissez le service tourner dans un terminal avec :
+
+Si ce n'est pas déjà fait, commencez par installer les dépendances du projet :
+
+```bash
+make install
+```
+
+Puis lancez le service dans un premier terminal :
+
+```bash
+make run
+```
+
+Puis, dans un second terminal, vous pouvez tester la requête avec :
+
+```bash
+make sample-request
+```
+
+Cette étape ne valide pas encore le shadow dans Kubernetes.
+Elle permet surtout de vérifier que votre service répond bien et que le payload de test est correct.
+
+Pour observer le shadow dans l'infrastructure, utilisez ensuite :
+
+```bash
+make sample-shadow-request
+```
+
+Quand le shadow sera en place derrière l'Ingress, l'idée restera la même :
+
+- vous envoyez une requête
+- la réponse visible doit encore provenir de la version stable
+
+Si tout fonctionne bien, la réponse JSON doit continuer à contenir :
+
+```json
+"model_version": "v1"
+```
+
+### 3. Regarder les logs des deux versions
+
+Pour voir que le challenger reçoit aussi du trafic, le plus simple est de regarder les logs des pods.
+
+Par exemple :
+
+```bash
+kubectl get pods -n fraud-detection
+```
+
+Puis :
+
+```bash
+kubectl logs deployment/fraud-v1 -n fraud-detection
+kubectl logs deployment/fraud-v2 -n fraud-detection
+```
+
+L'objectif est de constater que :
+
+- `v1` continue à traiter les requêtes visibles
+- `v2` reçoit aussi des requêtes grâce au mirroring
+
+### 4. Observer les métriques par version
+
+Vous pouvez aussi observer le shadow via les métriques Prometheus exposées par le service.
+
+Par exemple, en ouvrant les métriques du service stable puis du service challenger, vous pourrez comparer l'évolution des compteurs.
+
+Ce que vous cherchez à vérifier est simple :
+
+- les requêtes augmentent côté `v1`
+- des requêtes apparaissent aussi côté `v2`
+- mais l'utilisateur continue à recevoir la réponse de `v1`
+
+### 5. Plus tard avec Grafana
+
+Quand Prometheus et Grafana seront en place dans le module, le shadow deviendra plus lisible visuellement.
+
+Vous pourrez alors suivre :
+
+- la latence par `model_version`
+- le taux d'erreur par version
+- l'activité du challenger pendant qu'il reste invisible pour l'utilisateur
+
+Le point important à retenir est donc le suivant :
+
+le shadow se valide moins par la réponse utilisateur que par les **logs**, les **métriques** et les **dashboards**.
 
 ## Résumé
 

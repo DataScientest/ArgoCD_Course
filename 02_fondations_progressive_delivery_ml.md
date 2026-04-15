@@ -136,6 +136,15 @@ MODEL_VERSION=v1
 
 Cela vous permettra de lancer et tester localement le service avant de l'utiliser dans Kubernetes.
 
+Si ce n'est pas déjà fait, pensez aussi à installer les dépendances du projet :
+
+```bash
+make install
+```
+
+Cette étape est importante, car le projet utilise Python `3.11`.
+Même si votre Python système est plus ancien, `uv` pourra préparer le bon environnement pour le service.
+
 Repérez trois éléments :
 
 - la variable `MODEL_VERSION`
