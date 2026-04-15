@@ -6,6 +6,7 @@ metadata:
 spec:
   selector:
     app: fraud-scoring
+    track: stable
   ports:
     - port: 80
       targetPort: 8000

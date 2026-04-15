@@ -1,5 +1,6 @@
 import os
 import time
+import logging
 from typing import Literal
 
 from fastapi import FastAPI
@@ -9,6 +10,9 @@ from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_
 from starlette.responses import Response
 
 load_dotenv()
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("fraud_service")
 
 MODEL_VERSION = os.getenv("MODEL_VERSION", "v1")
 
@@ -74,6 +78,13 @@ def predict(payload: FraudRequest):
         probability = score_request(payload)
         prediction = "fraud" if probability >= 0.5 else "legit"
         REQUEST_COUNT.labels(model_version=MODEL_VERSION, prediction=prediction).inc()
+        logger.info(
+            "prediction served | model_version=%s | prediction=%s | amount=%s | country=%s",
+            MODEL_VERSION,
+            prediction,
+            payload.amount,
+            payload.country,
+        )
         return FraudResponse(
             fraud_probability=round(probability, 4),
             prediction=prediction,

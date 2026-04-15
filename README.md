@@ -50,11 +50,14 @@ Pour la suite du module, vous utiliserez aussi :
 Pourquoi ces outils sont nécessaires :
 
 - `git` pour récupérer le dépôt du projet
-- `uv` pour gérer l'environnement Python et les dépendances
+- `uv` pour gérer l'environnement Python, installer Python `3.11` si besoin, et installer les dépendances
 - `docker` pour construire et exécuter les images
 - `kind` pour créer un cluster Kubernetes local
 - `kubectl` pour interagir avec le cluster
 - `make` pour lancer plus facilement les commandes du projet
+
+Le projet utilise Python `3.11`.
+Si votre machine a une version plus ancienne de Python, ce n'est pas bloquant : `uv` pourra créer l'environnement avec Python `3.11` automatiquement.
 
 ## Structure du dépôt
 
@@ -85,6 +88,12 @@ Le projet introduit déjà quelques habitudes utiles :
 make install
 ```
 
+Cette commande utilise `uv` pour :
+
+- installer Python `3.11` si nécessaire
+- créer l'environnement virtuel `.venv`
+- installer les dépendances du service
+
 ### 2. Préparer le `.env`
 
 ```bash
@@ -97,10 +106,10 @@ Valeur de départ recommandée :
 MODEL_VERSION=v1
 ```
 
-### 3. Lancer les tests du service
+### 3. Vérifier l'état initial du service
 
 ```bash
-make test
+make status
 ```
 
 ### 4. Lancer le service localement
@@ -115,14 +124,78 @@ make run
 make kind-create
 ```
 
+### 6. Installer les briques du lab
+
+```bash
+bash scripts/install-ingress.sh
+bash scripts/install-rollouts.sh
+```
+
+### 7. Appliquer la base du projet
+
+```bash
+make apply-namespace
+make apply-services
+```
+
+### 8. Construire et charger les deux versions pour le shadow
+
+```bash
+make build-v1
+make build-v2
+make load-v1
+make load-v2
+```
+
+### 9. Déployer les deux versions dans le cluster
+
+```bash
+make apply-shadow-base
+make apply-shadow-ingress
+```
+
+### 10. Envoyer une première requête de test
+
+Si vous travaillez encore localement sur le service seul, laissez `make run` tourner dans un premier terminal, puis ouvrez un second terminal :
+
+```bash
+make sample-request
+```
+
+Pour observer le shadow dans l'infrastructure Kubernetes, utilisez ensuite :
+
+```bash
+make sample-shadow-request
+```
+
+Puis regardez les pods et leurs logs :
+
+```bash
+kubectl get pods -n fraud-detection
+kubectl logs deployment/fraud-v1 -n fraud-detection
+kubectl logs deployment/fraud-v2 -n fraud-detection
+```
+
+Ce que vous devez constater :
+
+- la réponse visible vient de `v1`
+- `v2` reçoit aussi la requête grâce au mirroring
+
 ## Commandes utiles
 
 - `make install`
 - `make run`
 - `make status`
-- `make test`
+- `make sample-request`
+- `make sample-shadow-request`
 - `make build-image`
+- `make build-v1`
+- `make build-v2`
+- `make load-v1`
+- `make load-v2`
 - `make kind-create`
 - `make kind-delete`
 - `make apply-namespace`
 - `make apply-services`
+- `make apply-shadow-base`
+- `make apply-shadow-ingress`
