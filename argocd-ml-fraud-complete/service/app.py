@@ -1,13 +1,18 @@
 import os
-import random
 import time
+import logging
 from typing import Literal
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from pydantic import BaseModel, Field
+from dotenv import load_dotenv
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 from starlette.responses import Response
 
+load_dotenv()
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("fraud_service")
 
 MODEL_VERSION = os.getenv("MODEL_VERSION", "v1")
 
@@ -47,29 +52,21 @@ app = FastAPI(title="Fraud Scoring Service", version=MODEL_VERSION)
 
 
 def score_request(payload: FraudRequest) -> float:
-    score = 0.03
-
+    score = 0.05
     if payload.amount > 1000:
         score += 0.35
-    if payload.merchant_category in {"luxury", "travel"}:
-        score += 0.08
     if payload.is_international:
-        score += 0.18
+        score += 0.20
     if payload.device_risk_score > 0.7:
-        score += 0.25
+        score += 0.30
     if payload.hour_of_day < 6:
         score += 0.10
 
+    # TODO chapitre 2 : différencier plus clairement v1, v2 et v2-buggy.
     if MODEL_VERSION == "v2":
-        if payload.country not in {"FR", "DE", "ES"}:
-            score += 0.06
-        score += 0.02
-
+        score += 0.05
     if MODEL_VERSION == "v2-buggy":
-        time.sleep(1.4)
-        if random.random() < 0.25:
-            raise HTTPException(status_code=500, detail="Bug simulé sur v2-buggy")
-        score += 0.12
+        time.sleep(1.2)
 
     return max(0.0, min(score, 0.99))
 
@@ -81,17 +78,21 @@ def predict(payload: FraudRequest):
         probability = score_request(payload)
         prediction = "fraud" if probability >= 0.5 else "legit"
         REQUEST_COUNT.labels(model_version=MODEL_VERSION, prediction=prediction).inc()
+        logger.info(
+            "prediction served | model_version=%s | prediction=%s | amount=%s | country=%s",
+            MODEL_VERSION,
+            prediction,
+            payload.amount,
+            payload.country,
+        )
         return FraudResponse(
             fraud_probability=round(probability, 4),
             prediction=prediction,
             model_version=MODEL_VERSION,
         )
-    except HTTPException:
+    except Exception:
         ERROR_COUNT.labels(model_version=MODEL_VERSION).inc()
         raise
-    except Exception as exc:
-        ERROR_COUNT.labels(model_version=MODEL_VERSION).inc()
-        raise HTTPException(status_code=500, detail=str(exc))
     finally:
         REQUEST_LATENCY.labels(model_version=MODEL_VERSION).observe(
             time.perf_counter() - started_at

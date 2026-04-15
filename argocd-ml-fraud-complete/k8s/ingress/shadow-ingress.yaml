@@ -4,7 +4,6 @@ metadata:
   name: fraud-shadow
   namespace: fraud-detection
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/mirror-target: http://fraud-canary.fraud-detection.svc.cluster.local$request_uri
     nginx.ingress.kubernetes.io/mirror-request-body: "on"
 spec:
