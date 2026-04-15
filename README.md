@@ -131,14 +131,28 @@ bash scripts/install-ingress.sh
 bash scripts/install-rollouts.sh
 ```
 
-### 7. Appliquer la base du projet
+### 7. Installer le plugin `kubectl argo rollouts`
+
+```bash
+curl -LO https://github.com/argoproj/argo-rollouts/releases/latest/download/kubectl-argo-rollouts-linux-amd64
+chmod +x ./kubectl-argo-rollouts-linux-amd64
+sudo mv ./kubectl-argo-rollouts-linux-amd64 /usr/local/bin/kubectl-argo-rollouts
+```
+
+Puis vérifiez :
+
+```bash
+kubectl-argo-rollouts version
+```
+
+### 8. Appliquer la base du projet
 
 ```bash
 make apply-namespace
 make apply-services
 ```
 
-### 8. Construire et charger les deux versions pour le shadow
+### 9. Construire et charger les deux versions pour le shadow
 
 ```bash
 make build-v1
@@ -147,14 +161,14 @@ make load-v1
 make load-v2
 ```
 
-### 9. Déployer les deux versions dans le cluster
+### 10. Déployer les deux versions dans le cluster
 
 ```bash
 make apply-shadow-base
 make apply-shadow-ingress
 ```
 
-### 10. Envoyer une première requête de test
+### 11. Envoyer une première requête de test
 
 Si vous travaillez encore localement sur le service seul, laissez `make run` tourner dans un premier terminal, puis ouvrez un second terminal :
 
@@ -199,3 +213,5 @@ Ce que vous devez constater :
 - `make apply-services`
 - `make apply-shadow-base`
 - `make apply-shadow-ingress`
+- `make cleanup-shadow`
+- `make apply-canary`

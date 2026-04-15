@@ -1,4 +1,4 @@
-.PHONY: install run status sample-request sample-shadow-request build-image build-v1 build-v2 load-v1 load-v2 kind-create kind-delete apply-namespace apply-services apply-shadow-base apply-shadow-ingress shadow-file canary-file bluegreen-file analysis-file
+.PHONY: install run status sample-request sample-shadow-request build-image build-v1 build-v2 load-v1 load-v2 kind-create kind-delete apply-namespace apply-services apply-shadow-base apply-shadow-ingress cleanup-shadow apply-canary update-canary-to-v2 shadow-file canary-file bluegreen-file analysis-file
 
 install:
 	uv python install 3.11
@@ -49,6 +49,15 @@ apply-shadow-base:
 
 apply-shadow-ingress:
 	kubectl apply -f k8s/ingress/shadow-ingress.yaml
+
+cleanup-shadow:
+	kubectl delete -f k8s/ingress/shadow-ingress.yaml --ignore-not-found=true && kubectl delete -f k8s/deployments/fraud-v1.yaml --ignore-not-found=true && kubectl delete -f k8s/deployments/fraud-v2.yaml --ignore-not-found=true
+
+apply-canary:
+	kubectl apply -f k8s/rollouts/canary-rollout.yaml
+
+update-canary-to-v2:
+	kubectl patch rollout fraud-rollout -n fraud-detection --type merge -p '{"spec":{"template":{"spec":{"containers":[{"name":"fraud-api","image":"fraud-scoring:v2","env":[{"name":"MODEL_VERSION","value":"v2"}]}]}}}}'
 
 shadow-file:
 	python3 -m pathlib k8s/ingress/shadow-ingress.yaml
