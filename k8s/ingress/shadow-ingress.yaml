@@ -4,7 +4,6 @@ metadata:
   name: fraud-shadow
   namespace: fraud-detection
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
     # TODO chapitre 3 : ajouter les annotations de mirroring vers le service challenger.
 spec:
   ingressClassName: nginx
