@@ -57,10 +57,26 @@ Un objet `Rollout` permet notamment de définir :
 
 Une grande partie du travail consiste à savoir lire la situation réelle.
 
+Avant d'utiliser les commandes `kubectl argo rollouts ...`, vous devez installer le plugin correspondant.
+
+Si vous êtes sur Linux, vous pouvez utiliser :
+
+```bash
+curl -LO https://github.com/argoproj/argo-rollouts/releases/latest/download/kubectl-argo-rollouts-linux-amd64
+chmod +x ./kubectl-argo-rollouts-linux-amd64
+sudo mv ./kubectl-argo-rollouts-linux-amd64 /usr/local/bin/kubectl-argo-rollouts
+```
+
+Puis vérifiez l'installation :
+
+```bash
+kubectl-argo-rollouts version
+```
+
 Commande importante :
 
 ```bash
-kubectl argo rollouts get rollout fraud-rollout
+kubectl argo rollouts get rollout fraud-rollout -n fraud-detection
 ```
 
 Cette commande permet de voir :
@@ -104,17 +120,14 @@ Cela permet d'éviter une montée trop rapide du risque.
 
 ## Exemple concret
 
-Vous déployez `fraud-model:v2`.
+Dans une démonstration canary propre, on ne démarre pas directement avec `v2`.
 
-Le rollout commence à `10 %`.
+On procède en deux temps :
 
-Vous observez :
+1. on installe d'abord le rollout avec `v1`
+2. puis on met à jour le rollout vers `v2`
 
-- la latence
-- le taux d'erreur
-- les logs de version
-
-Si tout reste sain, vous promouvez à `25 %`, puis à `50 %`, puis à `100 %`.
+Le canary commence alors à partir d'une vraie base stable.
 
 ## Livrables attendus du chapitre
 
@@ -166,12 +179,12 @@ spec:
     spec:
       containers:
         - name: fraud-api
-          image: fraud-scoring:v2
+          image: fraud-scoring:v1
           ports:
             - containerPort: 8000
           env:
             - name: MODEL_VERSION
-              value: v2
+              value: v1
   strategy:
     canary:
       stableService: fraud-stable
@@ -193,6 +206,188 @@ Ce que vous devez retenir :
 - chaque `setWeight` définit une nouvelle part de trafic
 - chaque `pause` crée un point d'observation
 - le rollout devient plus prudent et plus lisible qu'un simple `Deployment`
+
+## Mettre en place et tester le canary
+
+Modifier le fichier YAML ne suffit pas.
+Il faut aussi lancer le rollout et observer son comportement dans l'infrastructure.
+
+### 1. Nettoyer ce qui vient du shadow
+
+Le chapitre précédent utilisait deux `Deployment` séparés pour `v1` et `v2`.
+
+Pour passer proprement au canary avec Argo Rollouts, commencez par retirer cette mise en place précédente :
+
+```bash
+make cleanup-shadow
+```
+
+### 2. Appliquer le rollout canary
+
+```bash
+make apply-canary
+```
+
+Puis vérifiez qu'il existe bien :
+
+```bash
+kubectl get rollouts -n fraud-detection
+kubectl argo rollouts get rollout fraud-rollout -n fraud-detection
+```
+
+À ce stade, le rollout doit représenter votre version stable `v1`.
+
+### 3. Mettre à jour le rollout vers `v2`
+
+Le canary commence vraiment quand vous faites évoluer la version stable vers la nouvelle version candidate.
+
+Pour cela, appliquez la mise à jour vers `v2` :
+
+```bash
+make update-canary-to-v2
+kubectl argo rollouts get rollout fraud-rollout -n fraud-detection
+```
+
+Ici, le projet utilise une commande `kubectl patch`.
+
+Pourquoi ?
+
+- un fichier YAML partiel ne suffit pas avec `kubectl apply`
+- l'objet `Rollout` doit rester valide dans son ensemble
+- `kubectl patch` est mieux adapté pour modifier uniquement l'image et la variable `MODEL_VERSION`
+
+Cette fois, Argo Rollouts doit conserver `v1` comme base stable, puis introduire `v2` progressivement.
+
+### 4. Observer les pods créés
+
+```bash
+kubectl get pods -n fraud-detection -w
+```
+
+L'idée ici est de voir le rollout créer et gérer ses ReplicaSets à votre place.
+
+À ce moment-là, il ne faut pas seulement regarder le nombre de pods.
+Il faut surtout comprendre **pourquoi** plusieurs pods coexistent en même temps.
+
+Dans un rollout canary, Argo Rollouts ne supprime pas immédiatement l'ancienne version.
+Il garde :
+
+- une partie des pods de la version stable
+- puis il ajoute des pods de la nouvelle version
+
+Cela permet d'avoir une vraie phase de transition.
+
+Quand vous observez les pods, vous pouvez donc voir deux familles de pods :
+
+- des pods issus de l'ancienne révision
+- des pods issus de la nouvelle révision
+
+Le point important à comprendre est le suivant :
+
+- l'ancienne révision représente la base stable
+- la nouvelle révision représente la version candidate
+
+Autrement dit, tant que le rollout n'est pas terminé, il est normal de voir les deux coexister.
+
+### Ce qu'il faut lire concrètement
+
+Quand vous utilisez :
+
+```bash
+kubectl argo rollouts get rollout fraud-rollout -n fraud-detection
+```
+
+vous verrez souvent apparaître :
+
+- une révision marquée `stable`
+- une révision marquée `canary`
+
+Et quand vous utilisez :
+
+```bash
+kubectl get pods -n fraud-detection
+```
+
+vous voyez les pods qui appartiennent à ces révisions.
+
+Ce que cela signifie :
+
+- si plusieurs pods appartiennent à la révision stable, alors `v1` reste la base principale
+- si un plus petit nombre de pods appartient à la révision canary, alors `v2` est encore en phase d'introduction
+
+### Pourquoi le nombre de pods peut surprendre
+
+Il est fréquent de voir plus de pods que le nombre final attendu pendant la transition.
+
+Par exemple, si le rollout vise `3` replicas au final, vous pouvez quand même observer temporairement `4` pods :
+
+- `3` pods stables
+- `1` pod canary
+
+Cela arrive parce qu'Argo Rollouts cherche à introduire la nouvelle version sans casser immédiatement l'ancienne.
+
+Donc ici, voir plus de pods que prévu n'est pas forcément un problème.
+C'est souvent le signe qu'une transition progressive est en cours.
+
+### 5. Tester la version stable et la version canary
+
+Dans ce chapitre, le plus simple est de tester directement les deux services.
+
+Dans un premier terminal :
+
+```bash
+kubectl port-forward -n fraud-detection svc/fraud-stable 8082:80
+```
+
+Dans un second terminal :
+
+```bash
+kubectl port-forward -n fraud-detection svc/fraud-canary 8083:80
+```
+
+Puis envoyez une requête à chaque service.
+
+Version stable :
+
+```bash
+curl -s -X POST http://127.0.0.1:8082/predict \
+  -H "Content-Type: application/json" \
+  -d '{"amount":1499.0,"merchant_category":"travel","hour_of_day":2,"country":"FR","is_international":true,"device_risk_score":0.91}'
+```
+
+Version canary :
+
+```bash
+curl -s -X POST http://127.0.0.1:8083/predict \
+  -H "Content-Type: application/json" \
+  -d '{"amount":1499.0,"merchant_category":"travel","hour_of_day":2,"country":"FR","is_international":true,"device_risk_score":0.91}'
+```
+
+Ce que vous devez observer :
+
+- le service stable doit répondre avec `model_version: "v1"`
+- le service canary doit répondre avec `model_version: "v2"`
+
+
+### 6. Promouvoir manuellement le rollout
+
+Une fois l'état observé, vous pouvez passer à l'étape suivante :
+
+```bash
+kubectl argo rollouts promote fraud-rollout -n fraud-detection
+kubectl argo rollouts get rollout fraud-rollout -n fraud-detection
+```
+
+Vous pouvez répéter cette commande à chaque pause pour faire progresser le canary.
+
+### 7. Ce que ce test valide réellement
+
+Dans ce chapitre, le test du canary valide surtout :
+
+- que le rollout est bien pris en charge par Argo Rollouts
+- que les pauses sont visibles
+- que les services stable et canary pointent vers les bonnes versions
+- que la promotion manuelle fait avancer l'état du rollout
 
 ## Erreurs fréquentes
 
