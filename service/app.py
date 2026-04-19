@@ -1,9 +1,10 @@
 import os
 import time
 import logging
+import random
 from typing import Literal
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
@@ -67,6 +68,8 @@ def score_request(payload: FraudRequest) -> float:
         score += 0.05
     if MODEL_VERSION == "v2-buggy":
         time.sleep(1.2)
+        if random.random() < 0.35:
+            raise HTTPException(status_code=500, detail="Bug simulé sur v2-buggy")
 
     return max(0.0, min(score, 0.99))
 

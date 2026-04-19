@@ -42,6 +42,7 @@ Avant de commencer, assurez-vous d'avoir installé les outils suivants sur votre
 - `kind`
 - `kubectl`
 - `make`
+- `helm`
 
 Pour la suite du module, vous utiliserez aussi :
 
@@ -55,9 +56,42 @@ Pourquoi ces outils sont nécessaires :
 - `kind` pour créer un cluster Kubernetes local
 - `kubectl` pour interagir avec le cluster
 - `make` pour lancer plus facilement les commandes du projet
+- `helm` pour installer Prometheus et Grafana dans le cluster local
 
 Le projet utilise Python `3.11`.
 Si votre machine a une version plus ancienne de Python, ce n'est pas bloquant : `uv` pourra créer l'environnement avec Python `3.11` automatiquement.
+
+## Installation rapide de quelques outils sur Linux
+
+### Installer `kubectl`
+
+```bash
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/
+```
+
+### Installer `kind`
+
+```bash
+curl -Lo ./kind https://kind.sigs.k8s.io/dl/latest/kind-linux-amd64
+chmod +x ./kind
+sudo mv ./kind /usr/local/bin/kind
+```
+
+### Installer `helm`
+
+```bash
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+```
+
+### Vérifier
+
+```bash
+kubectl version --client
+kind version
+helm version
+```
 
 ## Structure du dépôt
 
@@ -215,3 +249,13 @@ Ce que vous devez constater :
 - `make apply-shadow-ingress`
 - `make cleanup-shadow`
 - `make apply-canary`
+- `make update-canary-to-v2`
+- `make cleanup-canary`
+- `make apply-bluegreen`
+- `make update-bluegreen-to-v2`
+- `make cleanup-bluegreen`
+- `make build-v2-buggy`
+- `make load-v2-buggy`
+- `make apply-analysis-template`
+- `make apply-analysis-rollout`
+- `make update-analysis-to-v2-buggy`

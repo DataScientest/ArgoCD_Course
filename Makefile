@@ -1,4 +1,4 @@
-.PHONY: install run status sample-request sample-shadow-request build-image build-v1 build-v2 load-v1 load-v2 kind-create kind-delete apply-namespace apply-services apply-shadow-base apply-shadow-ingress cleanup-shadow apply-canary update-canary-to-v2 shadow-file canary-file bluegreen-file analysis-file
+.PHONY: install run status sample-request sample-shadow-request build-image build-v1 build-v2 build-v2-buggy load-v1 load-v2 load-v2-buggy kind-create kind-delete apply-namespace apply-services apply-shadow-base apply-shadow-ingress cleanup-shadow apply-canary update-canary-to-v2 cleanup-canary apply-bluegreen update-bluegreen-to-v2 cleanup-bluegreen apply-analysis-template apply-analysis-rollout update-analysis-to-v2-buggy shadow-file canary-file bluegreen-file analysis-file
 
 install:
 	uv python install 3.11
@@ -26,11 +26,17 @@ build-v1:
 build-v2:
 	docker build -t fraud-scoring:v2 service
 
+build-v2-buggy:
+	docker build -t fraud-scoring:v2-buggy service
+
 load-v1:
 	kind load docker-image fraud-scoring:v1 --name argocd-ml
 
 load-v2:
 	kind load docker-image fraud-scoring:v2 --name argocd-ml
+
+load-v2-buggy:
+	kind load docker-image fraud-scoring:v2-buggy --name argocd-ml
 
 kind-create:
 	kind create cluster --name argocd-ml --config scripts/kind-config.yaml
@@ -58,6 +64,27 @@ apply-canary:
 
 update-canary-to-v2:
 	kubectl patch rollout fraud-rollout -n fraud-detection --type merge -p '{"spec":{"template":{"spec":{"containers":[{"name":"fraud-api","image":"fraud-scoring:v2","env":[{"name":"MODEL_VERSION","value":"v2"}]}]}}}}'
+
+cleanup-canary:
+	kubectl delete rollout fraud-rollout -n fraud-detection --ignore-not-found=true
+
+apply-bluegreen:
+	kubectl apply -f k8s/rollouts/bluegreen-rollout.yaml
+
+update-bluegreen-to-v2:
+	kubectl patch rollout fraud-bluegreen -n fraud-detection --type merge -p '{"spec":{"template":{"spec":{"containers":[{"name":"fraud-api","image":"fraud-scoring:v2","env":[{"name":"MODEL_VERSION","value":"v2"}]}]}}}}'
+
+cleanup-bluegreen:
+	kubectl delete rollout fraud-bluegreen -n fraud-detection --ignore-not-found=true
+
+apply-analysis-template:
+	kubectl apply -f k8s/analysis/prometheus-analysis-template.yaml
+
+apply-analysis-rollout:
+	kubectl apply -f k8s/rollouts/canary-rollout-with-analysis.yaml
+
+update-analysis-to-v2-buggy:
+	kubectl patch rollout fraud-rollout-analysis -n fraud-detection --type merge -p '{"spec":{"template":{"spec":{"containers":[{"name":"fraud-api","image":"fraud-scoring:v2-buggy","env":[{"name":"MODEL_VERSION","value":"v2-buggy"}]}]}}}}'
 
 shadow-file:
 	python3 -m pathlib k8s/ingress/shadow-ingress.yaml

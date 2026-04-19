@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
-  name: fraud-rollout
+  name: fraud-rollout-analysis
   namespace: fraud-detection
 spec:
   replicas: 3
@@ -31,6 +31,22 @@ spec:
       stableService: fraud-stable
       canaryService: fraud-canary
       steps:
-        # TODO chapitre 4 : compléter les étapes 10 -> 25 -> 50 -> 100.
         - setWeight: 10
-        - pause: {}
+        - pause:
+            duration: 30s
+        - analysis:
+            templates:
+              - templateName: fraud-latency-and-errors
+        - setWeight: 25
+        - pause:
+            duration: 30s
+        - analysis:
+            templates:
+              - templateName: fraud-latency-and-errors
+        - setWeight: 50
+        - pause:
+            duration: 30s
+        - analysis:
+            templates:
+              - templateName: fraud-latency-and-errors
+        - setWeight: 100
