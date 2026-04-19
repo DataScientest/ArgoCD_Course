@@ -186,6 +186,18 @@ kubectl version --client
 kind version
 ```
 
+### Installer `helm`
+
+```bash
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+```
+
+### Vérifier l'installation de `helm`
+
+```bash
+helm version
+```
+
 Pour le moment, vous n'avez rien à compléter.
 Le plus utile est de parcourir calmement sa structure.
 
