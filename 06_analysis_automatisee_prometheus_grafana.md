@@ -221,6 +221,14 @@ bash scripts/install-monitoring.sh
 
 Cette étape peut prendre un peu de temps.
 
+Le script commence par installer les **CRDs** du Prometheus Operator.
+
+Pourquoi est-ce important ?
+
+- les objets comme `ServiceMonitor`, `Prometheus` ou `PrometheusRule` n'existent pas dans Kubernetes par défaut
+- sans ces CRDs, Helm ne peut pas installer correctement la stack de monitoring
+- et le chapitre 6 ne peut pas fonctionner de bout en bout
+
 Ensuite, vérifiez que les pods de monitoring deviennent bien `Running` :
 
 ```bash
@@ -231,10 +239,34 @@ kubectl get pods -n monitoring
 
 ```bash
 make apply-analysis-template
+make apply-servicemonitor
 kubectl get analysistemplate -n fraud-detection
 ```
 
-### 4. Appliquer le rollout d'analyse en `v1`
+Le `ServiceMonitor` est important ici.
+Il permet à Prometheus de découvrir explicitement les métriques du service.
+
+### 4. Vérifier d'abord Prometheus
+
+Avant même de regarder Grafana, il faut vérifier que Prometheus scrape bien l'application.
+
+Faites un port-forward vers Prometheus :
+
+```bash
+kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090
+```
+
+Puis ouvrez dans votre navigateur :
+
+```txt
+http://127.0.0.1:9090/targets
+```
+
+Vous devez y voir une target liée à votre service de fraude en `UP`.
+
+Si vous ne voyez rien dans Prometheus, Grafana ne pourra rien afficher non plus.
+
+### 5. Appliquer le rollout d'analyse en `v1`
 
 ```bash
 make apply-analysis-rollout
@@ -243,14 +275,14 @@ kubectl argo rollouts get rollout fraud-rollout-analysis -n fraud-detection
 
 À ce stade, `v1` reste la base stable.
 
-### 5. Préparer et charger la version `v2-buggy`
+### 6. Préparer et charger la version `v2-buggy`
 
 ```bash
 make build-v2-buggy
 make load-v2-buggy
 ```
 
-### 6. Mettre à jour le rollout vers `v2-buggy`
+### 7. Mettre à jour le rollout vers `v2-buggy`
 
 ```bash
 make update-analysis-to-v2-buggy
@@ -259,7 +291,7 @@ kubectl argo rollouts get rollout fraud-rollout-analysis -n fraud-detection
 
 Cette mise à jour lance la nouvelle révision candidate avec les étapes d'analyse automatiques.
 
-### 7. Générer du trafic vers la version canary
+### 8. Générer du trafic vers la version canary
 
 Pour que Prometheus observe des erreurs et de la latence, il faut produire du trafic.
 
@@ -312,7 +344,7 @@ Avec `v2-buggy`, vous devez observer :
 - des réponses lentes
 - parfois des erreurs HTTP `500`
 
-### 8. Observer le résultat de l'analyse
+### 9. Observer le résultat de l'analyse
 
 Surveillez les `AnalysisRun` créés par Argo Rollouts :
 
@@ -327,7 +359,12 @@ Et relisez l'état du rollout :
 kubectl argo rollouts get rollout fraud-rollout-analysis -n fraud-detection
 ```
 
-### 9. Ce que vous devez voir concrètement
+Si la version candidate se comporte mal pendant l'analyse, vous devez voir apparaître un échec dans l'un de ces deux endroits :
+
+- un `AnalysisRun` qui passe en `Failed` ou `Error`
+- un rollout qui passe en `Degraded` ou qui est `Aborted`
+
+### 10. Ce que vous devez voir concrètement
 
 Si la version `v2-buggy` génère assez d'erreurs ou de latence, vous devez observer :
 
@@ -337,7 +374,47 @@ Si la version `v2-buggy` génère assez d'erreurs ou de latence, vous devez obse
 
 Autrement dit, l'analyse automatisée aura joué son rôle de garde-fou.
 
-### 10. Ce que Grafana apporte ici
+## Vérifier le fail dans Prometheus
+
+Une fois le trafic généré vers `v2-buggy`, vous pouvez vérifier le signal directement dans Prometheus.
+
+Faites un port-forward :
+
+```bash
+kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090
+```
+
+Puis ouvrez :
+
+```txt
+http://127.0.0.1:9090/graph
+```
+
+Testez les deux requêtes suivantes.
+
+### Taux d'erreur
+
+```promql
+sum(rate(fraud_prediction_errors_total{model_version="v2-buggy"}[1m])) or vector(0)
+```
+
+### Latence `p95`
+
+```promql
+histogram_quantile(
+  0.95,
+  sum(rate(fraud_prediction_latency_seconds_bucket{model_version="v2-buggy"}[1m])) by (le)
+) or vector(0)
+```
+
+Ce que vous devez observer :
+
+- pendant le trafic, les courbes montent
+- si `v2-buggy` se comporte mal, elles peuvent dépasser les seuils du `AnalysisTemplate`
+
+Autrement dit, Prometheus vous montre la **cause métrique** de l'échec.
+
+### 11. Ce que Grafana apporte ici
 
 Même si Argo Rollouts prend la décision à partir de Prometheus, Grafana vous permet de rendre cette décision plus lisible.
 
@@ -348,6 +425,172 @@ Vous pouvez l'utiliser pour voir plus clairement :
 - la différence entre la version stable et la version candidate
 
 Dans ce chapitre, Grafana sert donc à interpréter visuellement ce que l'analyse automatisée a déjà détecté.
+
+## Vérifier visuellement dans Grafana
+
+Pour donner un rendu plus concret à ce chapitre, vous pouvez aussi ouvrir Grafana et regarder l'effet de `v2-buggy` de manière visuelle.
+
+### 1. Ouvrir Grafana
+
+Si vous avez installé Grafana avec le script du projet, vous pouvez faire un port-forward :
+
+```bash
+kubectl port-forward -n monitoring svc/prometheus-grafana 3000:80
+```
+
+Puis ouvrez :
+
+```txt
+http://127.0.0.1:3000
+```
+
+Identifiants par défaut du script d'installation :
+
+- utilisateur : `admin`
+
+Selon votre installation, le mot de passe peut être différent de `admin`.
+
+Si la connexion échoue, récupérez le mot de passe réel avec :
+
+```bash
+kubectl get secret -n monitoring prometheus-grafana -o jsonpath="{.data.admin-password}" | base64 -d && echo
+```
+
+Puis utilisez la valeur affichée comme mot de passe Grafana.
+
+### 2. Ce qu'il faut regarder
+
+Dans Grafana, vous pouvez créer un panneau simple ou utiliser l'exploration de requêtes pour observer :
+
+- le taux d'erreur de `v2-buggy`
+- la latence `p95`
+- la comparaison entre `v1` et `v2-buggy`
+
+Exemples de requêtes Prometheus utiles :
+
+```promql
+sum(rate(fraud_prediction_errors_total{model_version="v2-buggy"}[1m]))
+```
+
+```promql
+histogram_quantile(
+  0.95,
+  sum(rate(fraud_prediction_latency_seconds_bucket{model_version="v2-buggy"}[1m])) by (le)
+)
+```
+
+Ce que vous devez voir si `v2-buggy` se comporte mal :
+
+- une hausse du taux d'erreur
+- une latence plus élevée
+- un comportement visiblement plus mauvais que `v1`
+
+Une petite démo visuelle suffisante pour ce chapitre consiste à créer deux panneaux simples :
+
+- un panneau pour le taux d'erreur de `v2-buggy`
+- un panneau pour la latence `p95`
+
+Même sans dashboard très sophistiqué, cela suffit pour rendre visible l'effet de la version candidate.
+
+## Petite démo visuelle de fail dans Grafana
+
+Pour une démo simple, vous pouvez faire ceci.
+
+### 1. Ouvrir Grafana
+
+```bash
+kubectl port-forward -n monitoring svc/prometheus-grafana 3000:80
+```
+
+Puis ouvrir :
+
+```txt
+http://127.0.0.1:3000
+```
+
+### 2. Aller dans Explore
+
+Dans Grafana :
+
+- ouvrez **Explore**
+- choisissez la source de données Prometheus
+
+### 3. Lancer les deux requêtes
+
+Requête 1 :
+
+```promql
+sum(rate(fraud_prediction_errors_total{model_version="v2-buggy"}[1m])) or vector(0)
+```
+
+Requête 2 :
+
+```promql
+histogram_quantile(
+  0.95,
+  sum(rate(fraud_prediction_latency_seconds_bucket{model_version="v2-buggy"}[1m])) by (le)
+) or vector(0)
+```
+
+### 4. Rejouer du trafic pendant l'observation
+
+Pendant que Grafana affiche les courbes, relancez la charge :
+
+```bash
+for i in $(seq 1 100); do
+  curl -s -o /dev/null -w "%{http_code}\n" -X POST http://127.0.0.1:8083/predict \
+    -H "Content-Type: application/json" \
+    -d '{"amount":1499.0,"merchant_category":"travel","hour_of_day":2,"country":"FR","is_international":true,"device_risk_score":0.91}'
+done
+```
+
+### 5. Ce que vous devez voir
+
+Si le fail est bien visible :
+
+- le taux d'erreur monte dans Grafana
+- la latence `p95` monte aussi
+- en parallèle, Argo Rollouts peut finir par dégrader ou interrompre le rollout
+
+Donc la lecture complète devient :
+
+- **Prometheus** montre les valeurs brutes
+- **Grafana** les rend visuelles
+- **Argo Rollouts** prend la décision sur cette base
+
+## Où voit-on l'alerte ?
+
+Ici, il faut bien distinguer deux choses.
+
+### Ce que vous voyez dans ce chapitre
+
+Dans ce module, la "décision" n'apparaît pas d'abord comme une alerte Prometheus classique.
+
+Elle apparaît surtout dans :
+
+- `kubectl describe analysisrun ...`
+- `kubectl argo rollouts get rollout ...`
+
+Autrement dit, Argo Rollouts lit les métriques Prometheus et prend sa décision via l'`AnalysisTemplate`.
+
+Le signal principal se voit donc dans :
+
+- l'état de l'`AnalysisRun`
+- l'état du `Rollout`
+
+### Ce que vous ne voyez pas encore forcément
+
+Vous ne verrez pas automatiquement une alerte Prometheus ou Alertmanager, sauf si vous créez en plus :
+
+- une règle d'alerte Prometheus (`PrometheusRule`)
+- et éventuellement une notification côté Alertmanager ou Grafana
+
+Donc, dans la démonstration actuelle :
+
+- Prometheus sert de source de métriques
+- Argo Rollouts exploite ces métriques pour décider
+- Grafana sert à visualiser
+- l'"alerte" opérationnelle se lit d'abord dans Argo Rollouts, pas dans Alertmanager
 
 ## Erreurs fréquentes
 
