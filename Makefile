@@ -1,4 +1,4 @@
-.PHONY: install run status sample-request sample-shadow-request build-image build-v1 build-v2 build-v2-buggy load-v1 load-v2 load-v2-buggy kind-create kind-delete apply-namespace apply-services apply-shadow-base apply-shadow-ingress cleanup-shadow apply-canary update-canary-to-v2 cleanup-canary apply-bluegreen update-bluegreen-to-v2 cleanup-bluegreen apply-analysis-template apply-analysis-rollout update-analysis-to-v2-buggy shadow-file canary-file bluegreen-file analysis-file
+.PHONY: install run status sample-request sample-shadow-request build-image build-v1 build-v2 build-v2-buggy load-v1 load-v2 load-v2-buggy kind-create kind-delete apply-namespace apply-services apply-shadow-base apply-shadow-ingress cleanup-shadow apply-canary update-canary-to-v2 cleanup-canary apply-bluegreen update-bluegreen-to-v2 cleanup-bluegreen apply-analysis-template apply-servicemonitor apply-analysis-rollout update-analysis-to-v2-buggy shadow-file canary-file bluegreen-file analysis-file
 
 install:
 	uv python install 3.11
@@ -79,6 +79,9 @@ cleanup-bluegreen:
 
 apply-analysis-template:
 	kubectl apply -f k8s/analysis/prometheus-analysis-template.yaml
+
+apply-servicemonitor:
+	kubectl apply -f k8s/analysis/fraud-servicemonitor.yaml
 
 apply-analysis-rollout:
 	kubectl apply -f k8s/rollouts/canary-rollout-with-analysis.yaml

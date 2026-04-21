@@ -3,9 +3,12 @@ kind: Service
 metadata:
   name: fraud-stable
   namespace: fraud-detection
+  labels:
+    app: fraud-scoring
 spec:
   selector:
     app: fraud-scoring
   ports:
-    - port: 80
+    - name: http
+      port: 80
       targetPort: 8000

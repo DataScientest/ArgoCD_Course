@@ -257,5 +257,52 @@ Ce que vous devez constater :
 - `make build-v2-buggy`
 - `make load-v2-buggy`
 - `make apply-analysis-template`
+- `make apply-servicemonitor`
 - `make apply-analysis-rollout`
 - `make update-analysis-to-v2-buggy`
+
+## Petite démo monitoring
+
+Une fois le chapitre 6 lancé, vous pouvez vérifier les métriques visuellement.
+
+### Prometheus
+
+```bash
+kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090
+```
+
+Puis ouvrez :
+
+```txt
+http://127.0.0.1:9090/graph
+```
+
+### Grafana
+
+```bash
+kubectl port-forward -n monitoring svc/prometheus-grafana 3000:80
+```
+
+Puis ouvrez :
+
+```txt
+http://127.0.0.1:3000
+```
+
+Identifiants par défaut :
+
+- utilisateur : `admin`
+- mot de passe : `admin`
+
+### Requêtes utiles
+
+```promql
+sum(rate(fraud_prediction_errors_total{model_version="v2-buggy"}[1m])) or vector(0)
+```
+
+```promql
+histogram_quantile(
+  0.95,
+  sum(rate(fraud_prediction_latency_seconds_bucket{model_version="v2-buggy"}[1m])) by (le)
+) or vector(0)
+```
