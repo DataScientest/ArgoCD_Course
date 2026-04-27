@@ -1,4 +1,4 @@
-.PHONY: install status run sample-request kind-create kind-delete apply-base-dev apply-base-prod apply-appproject apply-app-dev apply-app-prod
+.PHONY: install status run sample-request build-v1 load-v1 kind-create kind-delete apply-base-dev apply-base-prod apply-appproject apply-app-dev apply-app-prod
 
 install:
 	uv python install 3.11
@@ -13,6 +13,12 @@ run:
 
 sample-request:
 	curl -s -X POST http://127.0.0.1:8000/predict -H "Content-Type: application/json" -d '{"message_length":420,"customer_tier":"enterprise","waiting_hours":18,"sentiment_score":0.15,"has_sla_breach":true}'
+
+build-v1:
+	docker build -t support-priority-api:v1 service
+
+load-v1:
+	kind load docker-image support-priority-api:v1 --name argocd-course
 
 kind-create:
 	kind create cluster --name argocd-course --config scripts/kind-config.yaml

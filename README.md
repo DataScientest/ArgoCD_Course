@@ -53,6 +53,9 @@ Le service expose :
 Le comportement du service est volontairement simple.
 L'accent du module porte sur GitOps et ArgoCD, pas sur le modèle lui-même.
 
+Dans ce module ArgoCD, nous ne nous appuyons pas sur un `Ingress` pour valider le service.
+Le test de l'application se fait plus simplement via un `port-forward` sur le `Service`, afin de garder le lab léger et plus robuste localement.
+
 ## Pré-requis
 
 - `git`
@@ -94,12 +97,38 @@ make run
 make kind-create
 ```
 
+### Construire et charger l'image du service dans `kind`
+
+Avant de laisser ArgoCD déployer l'application, il faut que le cluster puisse trouver l'image locale.
+
+```bash
+make build-v1
+make load-v1
+```
+
+Sinon, le `Deployment` sera bien créé, mais les pods resteront en `ImagePullBackOff`.
+
 ## Ce que vous manipulerez dans le cours
 
 ### Chapitre 2
 
 - installation d'ArgoCD
+- construction et chargement de l'image applicative
 - création d'une `Application`
+
+### Tester l'application une fois synchronisée
+
+Quand ArgoCD a appliqué le `Deployment` et le `Service`, vous pouvez tester l'application avec :
+
+```bash
+kubectl port-forward -n support-priority svc/support-priority-api 8082:80
+```
+
+Puis dans un autre terminal :
+
+```bash
+curl -s http://127.0.0.1:8082/health
+```
 
 ### Chapitre 3
 
