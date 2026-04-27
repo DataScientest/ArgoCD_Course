@@ -108,6 +108,13 @@ make load-v1
 
 Sinon, le `Deployment` sera bien créé, mais les pods resteront en `ImagePullBackOff`.
 
+Si vous voulez préparer la démonstration de synchronisation applicative du chapitre 3, vous pouvez aussi charger une seconde image :
+
+```bash
+make build-v2
+make load-v2
+```
+
 ## Ce que vous manipulerez dans le cours
 
 ### Chapitre 2
@@ -132,6 +139,7 @@ curl -s http://127.0.0.1:8082/health
 
 ### Chapitre 3
 
+- mise à jour de `v1` vers `v2` via Git
 - modification manuelle d'une ressource
 - observation d'un drift
 - correction via `self-heal`

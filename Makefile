@@ -1,4 +1,4 @@
-.PHONY: install status run sample-request build-v1 load-v1 kind-create kind-delete apply-base-dev apply-base-prod apply-appproject apply-app-dev apply-app-prod
+.PHONY: install status run sample-request build-v1 build-v2 load-v1 load-v2 kind-create kind-delete apply-base-dev apply-base-prod apply-appproject apply-app-dev apply-app-prod
 
 install:
 	uv python install 3.11
@@ -17,8 +17,14 @@ sample-request:
 build-v1:
 	docker build -t support-priority-api:v1 service
 
+build-v2:
+	docker build -t support-priority-api:v2 service
+
 load-v1:
 	kind load docker-image support-priority-api:v1 --name argocd-course
+
+load-v2:
+	kind load docker-image support-priority-api:v2 --name argocd-course
 
 kind-create:
 	kind create cluster --name argocd-course --config scripts/kind-config.yaml
