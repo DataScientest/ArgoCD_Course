@@ -13,59 +13,60 @@ load_dotenv()
 MODEL_VERSION = os.getenv("MODEL_VERSION", "v1")
 
 REQUEST_COUNT = Counter(
-    "fraud_predictions_total",
-    "Nombre total de predictions",
+    "ticket_priority_predictions_total",
+    "Nombre total de predictions de priorite",
     ["model_version", "prediction"],
 )
 REQUEST_LATENCY = Histogram(
-    "fraud_prediction_latency_seconds",
-    "Latence des predictions",
+    "ticket_priority_latency_seconds",
+    "Latence des predictions de priorite",
     ["model_version"],
 )
 
 
-class FraudRequest(BaseModel):
-    amount: float = Field(ge=0)
-    merchant_category: str
-    hour_of_day: int = Field(ge=0, le=23)
-    country: str
-    is_international: bool
-    device_risk_score: float = Field(ge=0, le=1)
+class TicketRequest(BaseModel):
+    message_length: int = Field(ge=1)
+    customer_tier: str
+    waiting_hours: int = Field(ge=0)
+    sentiment_score: float = Field(ge=0, le=1)
+    has_sla_breach: bool
 
 
-class FraudResponse(BaseModel):
-    fraud_probability: float
-    prediction: Literal["fraud", "legit"]
+class TicketResponse(BaseModel):
+    priority_score: float
+    prediction: Literal["high", "normal"]
     model_version: str
 
 
-app = FastAPI(title="Fraud Scoring Service", version=MODEL_VERSION)
+app = FastAPI(title="Support Priority Service", version=MODEL_VERSION)
 
 
-def score_request(payload: FraudRequest) -> float:
+def score_request(payload: TicketRequest) -> float:
     score = 0.05
-    if payload.amount > 1000:
+    if payload.message_length > 300:
         score += 0.35
-    if payload.is_international:
-        score += 0.20
-    if payload.device_risk_score > 0.7:
+    if payload.has_sla_breach:
         score += 0.30
-    if payload.hour_of_day < 6:
+    if payload.sentiment_score < 0.3:
+        score += 0.30
+    if payload.waiting_hours > 12:
+        score += 0.10
+    if payload.customer_tier == "enterprise":
         score += 0.10
     if MODEL_VERSION == "v2":
         score += 0.05
     return max(0.0, min(score, 0.99))
 
 
-@app.post("/predict", response_model=FraudResponse)
-def predict(payload: FraudRequest):
+@app.post("/predict", response_model=TicketResponse)
+def predict(payload: TicketRequest):
     started_at = time.perf_counter()
     probability = score_request(payload)
-    prediction = "fraud" if probability >= 0.5 else "legit"
+    prediction = "high" if probability >= 0.5 else "normal"
     REQUEST_COUNT.labels(model_version=MODEL_VERSION, prediction=prediction).inc()
     REQUEST_LATENCY.labels(model_version=MODEL_VERSION).observe(time.perf_counter() - started_at)
-    return FraudResponse(
-        fraud_probability=round(probability, 4),
+    return TicketResponse(
+        priority_score=round(probability, 4),
         prediction=prediction,
         model_version=MODEL_VERSION,
     )

@@ -1,18 +1,18 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: fraud-api
-  namespace: fraud-detection
+  name: support-priority-api
+  namespace: support-priority
 spec:
   ingressClassName: nginx
   rules:
-    - host: fraud.local
+    - host: support-priority.local
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: fraud-api
+                name: support-priority-api
                 port:
                   number: 80

@@ -1,10 +1,10 @@
-namespace: fraud-detection
+namespace: support-priority
 resources:
   - ../../base
 patches:
   - target:
       kind: Deployment
-      name: fraud-api
+      name: support-priority-api
     patch: |-
       - op: replace
         path: /spec/replicas

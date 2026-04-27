@@ -1,14 +1,14 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: fraud-project
+  name: support-priority-project
   namespace: argocd
 spec:
-  description: Projet ArgoCD pour le service de scoring de fraude
+  description: Projet ArgoCD pour l'API de priorisation de tickets support
   sourceRepos:
     - https://github.com/DataScientest/ArgoCD_Course.git
   destinations:
-    - namespace: fraud-detection
+    - namespace: support-priority
       server: https://kubernetes.default.svc
   clusterResourceWhitelist:
     - group: '*'

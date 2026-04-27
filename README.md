@@ -4,7 +4,7 @@ Ce dépôt est le projet fil rouge du module ArgoCD.
 
 Le use case reste dans un contexte MLOps :
 
-**un service de scoring de fraude en temps réel**.
+**une API de priorisation de tickets de support client**.
 
 ## Objectif du projet
 

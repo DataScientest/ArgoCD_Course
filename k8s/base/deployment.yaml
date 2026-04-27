@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: fraud-api
-  namespace: fraud-detection
+  name: support-priority-api
+  namespace: support-priority
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: fraud-api
+      app: support-priority-api
   template:
     metadata:
       labels:
-        app: fraud-api
+        app: support-priority-api
     spec:
       containers:
-        - name: fraud-api
-          image: fraud-scoring:v1
+        - name: support-priority-api
+          image: support-priority-api:v1
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
