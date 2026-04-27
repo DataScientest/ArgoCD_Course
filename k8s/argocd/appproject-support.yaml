@@ -6,7 +6,7 @@ metadata:
 spec:
   description: Projet ArgoCD pour l'API de priorisation de tickets support
   sourceRepos:
-    - https://github.com/DataScientest/ArgoCD_Course.git
+    - <URL_DE_VOTRE_FORK>
   destinations:
     - namespace: support-priority
       server: https://kubernetes.default.svc

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: support-priority-demo
+  namespace: support-priority
+data:
+  mode: "demo"
