@@ -6,7 +6,7 @@ metadata:
 spec:
   description: Projet ArgoCD pour l'API de priorisation de tickets support
   sourceRepos:
-    - <URL_DE_VOTRE_FORK>
+    #- <URL_DE_VOTRE_FORK>
   destinations:
     - namespace: support-priority
       server: https://kubernetes.default.svc
